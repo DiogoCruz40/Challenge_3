@@ -25,7 +25,7 @@ public class PointMapper implements PointMapperInterface {
         modelMapper = getMapper();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N) //TODO: verficar se isto esta ok
+     //TODO: verficar se isto esta ok
     private <S, T> List<T> mapList(List<S> source, Class<T> targetClass) {
         return source
                 .stream()
