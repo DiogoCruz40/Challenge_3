@@ -3,16 +3,27 @@ package pt.cm.challenge_3.database.daos;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+
+import java.util.List;
+
+import pt.cm.challenge_3.database.entities.Point;
 
 
 @Dao
 public interface PointDAO {
-    /*
-    @Query("SELECT * FROM Point")
-    List<Note> getAll();
 
-    @Query("SELECT * FROM Point WHERE id_note IN (:userIds)")
+    @Query("SELECT * FROM points")
+    List<Point> getAll();
+
+    @Delete
+    void delete(Point note);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    long insert(Point point);
+
+   /* @Query("SELECT * FROM Point WHERE id_note IN (:userIds)")
     List<Note> loadAllByIds(int[] userIds);
 
     @Query("SELECT * FROM Point WHERE title LIKE :titulo")
@@ -30,8 +41,7 @@ public interface PointDAO {
     @Insert
     void insertAll(List<Note> notes);
 
-    @Delete
-    void delete(Note note);
+
 
     @Query("DELETE FROM Point WHERE id_note = :id_nota")
     void delete(int id_nota);*/

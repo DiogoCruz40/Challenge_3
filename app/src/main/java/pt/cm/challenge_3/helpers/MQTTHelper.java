@@ -9,11 +9,12 @@ import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
-//import info.mqtt.android.service.Ack;
-//import info.mqtt.android.service.MqttAndroidClient;
+import info.mqtt.android.service.Ack;
+import info.mqtt.android.service.MqttAndroidClient;
+
 
 public class MQTTHelper {
-    /*
+
     public MqttAndroidClient mqttAndroidClient;
 
     final String server = "tcp://broker.hivemq.com:1883"; //TODO - Place the IP here
@@ -114,5 +115,5 @@ public class MQTTHelper {
 
     public String getName() {
         return name;
-    }*/
+    }
 }

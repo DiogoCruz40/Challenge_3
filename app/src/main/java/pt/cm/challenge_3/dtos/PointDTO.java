@@ -18,7 +18,7 @@ public class PointDTO {
     }
 
     public String getTimestamp() {
-        return timestamp;
+        return this.timestamp;
     }
 
     public void setTimestamp(String timestamp) {
@@ -39,5 +39,13 @@ public class PointDTO {
 
     public void setHumidity(float humidity) {
         this.humidity = humidity;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
     }
 }
