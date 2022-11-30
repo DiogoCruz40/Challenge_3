@@ -6,12 +6,17 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import java.util.Arrays;
 
 import pt.cm.challenge_3.Interfaces.ActivityInterface;
 import pt.cm.challenge_3.Interfaces.FragmentInterface;
@@ -42,10 +47,28 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         view = inflater.inflate(R.layout.fragment_class, container, false);
 
         this.mViewModel = new ViewModelProvider(activityInterface.getmainactivity()).get(SharedViewModel.class);
+        Spinner spinner = (Spinner) view.findViewById(R.id.spinner);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(activityInterface.getmainactivity(), android.R.layout.simple_spinner_item, Arrays.asList("All", "Temperature", "Humidity"));
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
         return view;
     }
 
     public void insertPointFiltered(PointDTO pointDTO) {
+        Spinner spinner = view.findViewById(R.id.spinner);
+        if(spinner.getSelectedItem().toString().equals("All"))
+        {
+            mViewModel.insertPoint(pointDTO.getTemperature(),pointDTO.getHumidity(),pointDTO.getTimestamp());
+        }
+        else if(spinner.getSelectedItem().toString().equals("Temperature"))
+        {
+            mViewModel.insertPoint(pointDTO.getTemperature(),null,pointDTO.getTimestamp());
+        }
+        else if(spinner.getSelectedItem().toString().equals("Humidity"))
+        {
+            mViewModel.insertPoint(null,pointDTO.getHumidity(),pointDTO.getTimestamp());
+        }
 
     }
 
@@ -74,36 +97,5 @@ public class FragmentClass extends Fragment implements FragmentInterface {
             }
         });
     }
-
-    /*
-    public void mqttMsgPopUp(String topic, MqttMessage message) {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(activityInterface.getmainactivity());
-        final View mqttmesagePopUp = getLayoutInflater().inflate(R.layout.mqtt_message_popup, null);
-        Button confirm = (Button) mqttmesagePopUp.findViewById(R.id.confirmmsgbtnmqtt);
-        Button cancel = (Button) mqttmesagePopUp.findViewById(R.id.cancelmsgbtnmqtt2);
-        TextView topico = (TextView) mqttmesagePopUp.findViewById(R.id.topicmsgmqtt);
-        TextView titulo = (TextView) mqttmesagePopUp.findViewById(R.id.titlemsgmqtt);
-        NoteDTO noteDTO = new Gson().fromJson(message.toString(), NoteDTO.class);
-        topico.setText(topic);
-        titulo.setText(noteDTO.getTitle());
-
-        dialogBuilder.setView(mqttmesagePopUp);
-        Dialog dialog = dialogBuilder.create();
-        dialog.show();
-
-        confirm.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mViewModel.insertMqttNote(noteDTO.getTitle(), noteDTO.getDescription());
-                dialog.dismiss();
-            }
-        });
-        cancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-    }*/
 
 }

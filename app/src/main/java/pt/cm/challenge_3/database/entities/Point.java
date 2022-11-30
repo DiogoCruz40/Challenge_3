@@ -13,10 +13,10 @@ public class Point {
     public String timestamp;
 
     @ColumnInfo(name = "temperature")
-    public float temperature;
+    public Float temperature;
 
     @ColumnInfo(name = "humidity")
-    public float humidity;
+    public Float humidity;
     
 }
 

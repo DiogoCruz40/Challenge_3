@@ -1,11 +1,15 @@
 package pt.cm.challenge_3;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
+
+import java.util.List;
 
 import pt.cm.challenge_3.Interfaces.ActivityInterface;
 import pt.cm.challenge_3.dtos.PointDTO;
@@ -46,14 +50,6 @@ public class MainActivity extends AppCompatActivity implements ActivityInterface
         model.disconmqtt();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (fm.getBackStackEntryCount() > 0) {
-            fm.popBackStack();
-        } else {
-            super.onBackPressed();
-        }
-    }
     @Override
     public MainActivity getmainactivity() {
         return this;

@@ -37,9 +37,11 @@ public class SharedViewModel extends AndroidViewModel {
     private final MutableLiveData<String> toastMessageObserver = new MutableLiveData<String>();
     private MQTTHelper mqttHelper;
     private static boolean trigger = true;
+
     public SharedViewModel(@NonNull Application application) {
         super(application);
     }
+
     public MutableLiveData<String> getToastMessageObserver() {
         return this.toastMessageObserver;
     }
@@ -76,14 +78,16 @@ public class SharedViewModel extends AndroidViewModel {
             @Override
             public void run() {
                 // insert point
-                    PointMapperInterface noteMapperInterface = new PointMapper();
-                    PointDTO pointsDTO = new PointDTO(timestamp,temp,hum);
-                    pointsDTO.setId((int) mDb.notesDAO().insert(noteMapperInterface.toEntityPoint(pointsDTO)));
+                PointMapperInterface noteMapperInterface = new PointMapper();
+                PointDTO pointsDTO = new PointDTO(timestamp, temp, hum);
+                pointsDTO.setId((int) mDb.notesDAO().insert(noteMapperInterface.toEntityPoint(pointsDTO)));
+                // TODO: Notification HERE of TEMP OR HUMIDITY with an if
+//                Log.w("mqtt", String.valueOf(pointsDTO.getHumidity()));
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
                     public void run() {
                         List<PointDTO> aux = points.getValue();
-                        if(aux != null) {
+                        if (aux != null) {
                             aux.add(pointsDTO);
                             points.setValue(aux);
                         }
@@ -92,6 +96,7 @@ public class SharedViewModel extends AndroidViewModel {
             }
         });
     }
+
     private void deleteAllPoints() {
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
@@ -115,36 +120,35 @@ public class SharedViewModel extends AndroidViewModel {
             public void connectComplete(boolean reconnect, String serverURI) {
                 subscribeToTopic("TempHumADM");
                 subscribeToTopic("LEDADM");
-                toastMessageObserver.setValue("MQTT conn and sub successful");
                 Log.w("mqtt", "connected");
+                toastMessageObserver.setValue("MQTT conn and sub successful");
             }
 
             @Override
             public void connectionLost(Throwable cause) {
                 Log.w("mqtt", cause);
-                toastMessageObserver.setValue(cause.getMessage());
+                toastMessageObserver.setValue("Connection Lost. Restart the app");
             }
 
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
-                    if (Objects.equals(topic, "TempHumADM")) {
-                        if (trigger) {
-                            publishMessage("state", "LEDADM");
-                            trigger = false;
-                        }
-        //                {"humidity":12.56,"temperature":44.05,"timestamp":""}
-                        PointDTO pointDTO = new Gson().fromJson(message.toString(), PointDTO.class);
-                        if(pointDTO.getTimestamp() != null)
-                        {
-                        activityInterface.insertPointAct(pointDTO);
-                        }
-                    } else if (Objects.equals(topic, "LEDADM")) {
-                        if(!message.toString().equals("state"))
-                        {
-                            activityInterface.setLedAct(message.toString());
-                            unsubscribeToTopic("LEDADM");
-                        }
+                if (Objects.equals(topic, "TempHumADM")) {
+                    if (trigger) {
+                        publishMessage("state", "LEDADM");
+                        trigger = false;
                     }
+                    //                {"humidity":12.56,"temperature":44.05,"timestamp":""}
+                    PointDTO pointDTO = new Gson().fromJson(message.toString(), PointDTO.class);
+                    if (pointDTO.getTimestamp() != null) {
+                        activityInterface.insertPointAct(pointDTO);
+
+                    }
+                } else if (Objects.equals(topic, "LEDADM")) {
+                    if (!message.toString().equals("state")) {
+                        activityInterface.setLedAct(message.toString());
+                        unsubscribeToTopic("LEDADM");
+                    }
+                }
             }
 
             @Override

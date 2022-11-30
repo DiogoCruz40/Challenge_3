@@ -4,14 +4,14 @@ public class PointDTO {
 
     private int id;
     private String timestamp;
-    private float temperature;
-    private float humidity;
+    private Float temperature;
+    private Float humidity;
 
     public PointDTO(){
 
     }
 
-    public PointDTO(String timestamp, float temperature, float humidity) {
+    public PointDTO(String timestamp, Float temperature, Float humidity) {
         this.timestamp = timestamp;
         this.temperature = temperature;
         this.humidity = humidity;
@@ -25,19 +25,19 @@ public class PointDTO {
         this.timestamp = timestamp;
     }
 
-    public float getTemperature() {
+    public Float getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(float temperature) {
+    public void setTemperature(Float temperature) {
         this.temperature = temperature;
     }
 
-    public float getHumidity() {
+    public Float getHumidity() {
         return humidity;
     }
 
-    public void setHumidity(float humidity) {
+    public void setHumidity(Float humidity) {
         this.humidity = humidity;
     }
 
