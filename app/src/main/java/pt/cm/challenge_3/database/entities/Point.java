@@ -17,6 +17,9 @@ public class Point {
 
     @ColumnInfo(name = "humidity")
     public Float humidity;
-    
+
+    public Point(int i, int i1) {
+        //teste
+    }
 }
 

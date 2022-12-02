@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "pt.cm.challenge_3"
-        minSdk 24
+        minSdk 26
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -29,6 +29,12 @@ android {
 }
 
 dependencies {
+
+    //chart
+    implementation "com.github.PhilJay:MPAndroidChart:v3.1.0"
+
+    //notifications
+    implementation "androidx.core:core:1.6.0"
 
     //json
     implementation 'com.google.code.gson:gson:2.8.7'
