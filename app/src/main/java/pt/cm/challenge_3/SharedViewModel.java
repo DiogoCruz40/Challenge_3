@@ -4,7 +4,6 @@ import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -66,9 +65,9 @@ public class SharedViewModel extends AndroidViewModel {
                             points.setValue(pointsDTO);
                         }
 
-                        //AQUI
-                        System.out.println("AQUI");
-                        System.out.println(pointsDTO);
+//                        //AQUI
+//                        System.out.println("AQUI");
+//                        System.out.println(pointsDTO);
 
                     }
                 });
@@ -85,7 +84,6 @@ public class SharedViewModel extends AndroidViewModel {
                 PointMapperInterface noteMapperInterface = new PointMapper();
                 PointDTO pointsDTO = new PointDTO(timestamp, temp, hum);
                 pointsDTO.setId((int) mDb.pointsDAO().insert(noteMapperInterface.toEntityPoint(pointsDTO)));
-                // TODO: Notification HERE of TEMP OR HUMIDITY with an if
 //                Log.w("mqtt", String.valueOf(pointsDTO.getHumidity()));
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -168,23 +166,19 @@ public class SharedViewModel extends AndroidViewModel {
     }
 
 
-    private boolean subscribeToTopic(String topic) {
+    private void subscribeToTopic(String topic) {
         try {
             mqttHelper.subscribeToTopic(topic);
-            return true;
         } catch (Exception e) {
             toastMessageObserver.setValue(e.getMessage());
-            return false;
         }
     }
 
-    private boolean unsubscribeToTopic(String topic) {
+    private void unsubscribeToTopic(String topic) {
         try {
             mqttHelper.unsubscribeToTopic(topic);
-            return true;
         } catch (Exception e) {
             toastMessageObserver.setValue(e.getMessage());
-            return false;
         }
     }
 
@@ -204,7 +198,7 @@ public class SharedViewModel extends AndroidViewModel {
         }
     }
 
-    public List<PointDTO> getPoints() {
-        return points.getValue();
+    public MutableLiveData<List<PointDTO>> getPoints() {
+        return points;
     }
 }

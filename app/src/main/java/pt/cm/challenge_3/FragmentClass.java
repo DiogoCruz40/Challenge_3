@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -93,15 +94,22 @@ public class FragmentClass extends Fragment implements FragmentInterface {
 
         return view;
     }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        //TODO: Uncomment when needed
-        //chart();
+        mViewModel.getPoints().observe(getViewLifecycleOwner(), points -> {
+            //TODO: Uncomment when needed inside observer
+            try {
+                chart(points);
+            } catch (ParseException e) {
+                Log.w("chart",e.getMessage());
+            }
+        });
     }
 
-    public void chart() throws ParseException {
+    public void chart(List<PointDTO> points) throws ParseException {
 
         MainActivity a = activityInterface.getmainactivity();
 
@@ -169,17 +177,22 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         // below is the line where we are creating three lines for our chart.
         ArrayList<Entry> temp = new ArrayList<>();
         ArrayList<Entry> hum = new ArrayList<>();
-        List<PointDTO> dataList = mViewModel.getPoints();
+
 
         // on below line we are adding data to our charts.
-        for (PointDTO p : dataList) {
+        for (PointDTO p : points) {
             String str = p.getTimestamp();
             SimpleDateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
             Date date = df.parse(str);
             long epoch = date.getTime();
             System.out.println(epoch); // 1055545912454
-            temp.add(new Entry(p.getTemperature(), p.getTemperature()/*epoch*/));
-            hum.add(new Entry(p.getHumidity(), p.getHumidity()/*epoch*/));
+
+            if(p.getTemperature() != null) {
+                temp.add(new Entry(p.getTemperature(), p.getTemperature() /* epoch */));
+            }else if(p.getHumidity() != null)
+            {
+                hum.add(new Entry(p.getHumidity(), p.getHumidity()/*epoch */));
+            }
         }
 
         // create a data set and give it a type
@@ -233,10 +246,10 @@ public class FragmentClass extends Fragment implements FragmentInterface {
 
     public void insertPointFiltered(PointDTO pointDTO) {
         Spinner spinner = view.findViewById(R.id.spinner);
-        double max_temp,max_hum;
+        double max_temp, max_hum;
         String str = ((EditText) view.findViewById(R.id.input_temp)).getText().toString();
         System.out.println(str);
-        if(!str.isEmpty()){
+        if (!str.isEmpty()) {
             max_temp = Double.parseDouble(str);
             System.out.println("defined temperature in app");
         } else {
@@ -244,37 +257,30 @@ public class FragmentClass extends Fragment implements FragmentInterface {
             System.out.println("hello");
         }
         str = ((EditText) view.findViewById(R.id.input_hum)).getText().toString();
-        if(!str.isEmpty()){
+        if (!str.isEmpty()) {
             max_hum = Double.parseDouble(str);
         } else {
             max_hum = 50.0;
             System.out.println("hello2");
         }
 
-        if(pointDTO.getTemperature() > max_temp && pointDTO.getHumidity() > max_hum){
-            builder.setContentText("Both Temperature and Humidity are above the respective thresold ("+ max_temp + "ºC, " + max_hum + "%)!");
+        if (pointDTO.getTemperature() > max_temp && pointDTO.getHumidity() > max_hum) {
+            builder.setContentText("Both Temperature and Humidity are above the respective thresold (" + max_temp + "ºC, " + max_hum + "%)!");
             mNotificationManager.notify(123, builder.build());
-        }
-        else if(pointDTO.getHumidity() > max_hum){
+        } else if (pointDTO.getHumidity() > max_hum) {
             builder.setContentText("Humidity is above the " + max_hum + "% thresold!");
             mNotificationManager.notify(123, builder.build());
-        }
-        else if(pointDTO.getTemperature() > max_temp){
+        } else if (pointDTO.getTemperature() > max_temp) {
             builder.setContentText("Temperature is above the " + max_temp + "ºC thresold!");
             mNotificationManager.notify(123, builder.build());
         }
 
-        if(spinner.getSelectedItem().toString().equals("All"))
-        {
-            mViewModel.insertPoint(pointDTO.getTemperature(),pointDTO.getHumidity(),pointDTO.getTimestamp());
-        }
-        else if(spinner.getSelectedItem().toString().equals("Temperature"))
-        {
-            mViewModel.insertPoint(pointDTO.getTemperature(),null,pointDTO.getTimestamp());
-        }
-        else if(spinner.getSelectedItem().toString().equals("Humidity"))
-        {
-            mViewModel.insertPoint(null,pointDTO.getHumidity(),pointDTO.getTimestamp());
+        if (spinner.getSelectedItem().toString().equals("All")) {
+            mViewModel.insertPoint(pointDTO.getTemperature(), pointDTO.getHumidity(), pointDTO.getTimestamp());
+        } else if (spinner.getSelectedItem().toString().equals("Temperature")) {
+            mViewModel.insertPoint(pointDTO.getTemperature(), null, pointDTO.getTimestamp());
+        } else if (spinner.getSelectedItem().toString().equals("Humidity")) {
+            mViewModel.insertPoint(null, pointDTO.getHumidity(), pointDTO.getTimestamp());
         }
 
     }
@@ -308,17 +314,15 @@ public class FragmentClass extends Fragment implements FragmentInterface {
     private void createNotificationChannel() {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "WARNING";
-            String description = "ups";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel("WARNING_ID", name, importance);
-            channel.setDescription(description);
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            mNotificationManager = (NotificationManager) activityInterface.getmainactivity().getSystemService(Context.NOTIFICATION_SERVICE);
-            mNotificationManager.createNotificationChannel(channel);
-        }
+        CharSequence name = "WARNING";
+        String description = "ups";
+        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        NotificationChannel channel = new NotificationChannel("WARNING_ID", name, importance);
+        channel.setDescription(description);
+        // Register the channel with the system; you can't change the importance
+        // or other notification behaviors after this
+        mNotificationManager = (NotificationManager) activityInterface.getmainactivity().getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.createNotificationChannel(channel);
     }
 
 }
