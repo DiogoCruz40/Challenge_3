@@ -18,8 +18,14 @@ public class Point {
     @ColumnInfo(name = "humidity")
     public Float humidity;
 
-    public Point(int i, int i1) {
+    /*
+    public Point() {
         //teste
     }
+
+    public Point(float humidity, float temperature) {
+        this.humidity = humidity;
+        this.temperature = temperature;
+    }*/
 }
 

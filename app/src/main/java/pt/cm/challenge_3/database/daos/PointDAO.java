@@ -18,7 +18,7 @@ public interface PointDAO {
     List<Point> getAll();
 
     @Delete
-    void delete(Point note);
+    void delete(Point point);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(Point point);

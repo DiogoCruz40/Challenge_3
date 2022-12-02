@@ -54,7 +54,7 @@ public class SharedViewModel extends AndroidViewModel {
             public void run() {
                 //how to get all points
                 PointMapperInterface noteMapperInterface = new PointMapper();
-                List<PointDTO> pointsDTO = noteMapperInterface.toPointsDTO(mDb.notesDAO().getAll());
+                List<PointDTO> pointsDTO = noteMapperInterface.toPointsDTO(mDb.pointsDAO().getAll());
 
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
@@ -65,6 +65,10 @@ public class SharedViewModel extends AndroidViewModel {
                         } else {
                             points.setValue(pointsDTO);
                         }
+
+                        //AQUI
+                        System.out.println("AQUI");
+                        System.out.println(pointsDTO);
 
                     }
                 });
@@ -80,7 +84,7 @@ public class SharedViewModel extends AndroidViewModel {
                 // insert point
                 PointMapperInterface noteMapperInterface = new PointMapper();
                 PointDTO pointsDTO = new PointDTO(timestamp, temp, hum);
-                pointsDTO.setId((int) mDb.notesDAO().insert(noteMapperInterface.toEntityPoint(pointsDTO)));
+                pointsDTO.setId((int) mDb.pointsDAO().insert(noteMapperInterface.toEntityPoint(pointsDTO)));
                 // TODO: Notification HERE of TEMP OR HUMIDITY with an if
 //                Log.w("mqtt", String.valueOf(pointsDTO.getHumidity()));
                 new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -102,16 +106,15 @@ public class SharedViewModel extends AndroidViewModel {
             @Override
             public void run() {
                 // delete all notes
-                List<Point> pointsDB = mDb.notesDAO().getAll();
+                List<Point> pointsDB = mDb.pointsDAO().getAll();
 
                 for (Point n : pointsDB) {
-                    mDb.notesDAO().delete(n);
+                    mDb.pointsDAO().delete(n);
                 }
 
             }
         });
     }
-
 
     public void connmqtt(ActivityInterface activityInterface) {
         mqttHelper = new MQTTHelper(getApplication().getApplicationContext(), MqttClient.generateClientId());
@@ -199,5 +202,9 @@ public class SharedViewModel extends AndroidViewModel {
         } catch (Throwable e) {
             Log.w("mqtt", e.getMessage());
         }
+    }
+
+    public List<PointDTO> getPoints() {
+        return points.getValue();
     }
 }

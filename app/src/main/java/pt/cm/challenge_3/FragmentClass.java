@@ -13,6 +13,7 @@ import android.view.WindowManager;
 import android.widget.Adapter;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -23,8 +24,12 @@ import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import pt.cm.challenge_3.Interfaces.ActivityInterface;
 import pt.cm.challenge_3.Interfaces.FragmentInterface;
@@ -32,10 +37,15 @@ import pt.cm.challenge_3.database.entities.Point;
 import pt.cm.challenge_3.dtos.PointDTO;
 
 import com.github.mikephil.charting.charts.ScatterChart;
+import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.ScatterData;
 import com.github.mikephil.charting.data.ScatterDataSet;
+import com.github.mikephil.charting.interfaces.datasets.IScatterDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 
 public class FragmentClass extends Fragment implements FragmentInterface {
@@ -81,13 +91,17 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
 
-        //chart();
-
         return view;
     }
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-    /*
-    public void chart(){
+        //TODO: Uncomment when needed
+        //chart();
+    }
+
+    public void chart() throws ParseException {
 
         MainActivity a = activityInterface.getmainactivity();
 
@@ -153,29 +167,23 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         // in below line we are creating an array list for each entry of our chart.
         // we will be representing three values in our charts.
         // below is the line where we are creating three lines for our chart.
-        ArrayList<Point> values1 = new ArrayList<>();
-        ArrayList<Point> values2 = new ArrayList<>();
-        ArrayList<Point> values3 = new ArrayList<>();
+        ArrayList<Entry> temp = new ArrayList<>();
+        ArrayList<Entry> hum = new ArrayList<>();
+        List<PointDTO> dataList = mViewModel.getPoints();
 
         // on below line we are adding data to our charts.
-        for (int i = 0; i < 11; i++) {
-            values1.add(new Point(i, (i * 2)));
-        }
-
-        // on below line we are adding
-        // data to our value 2
-        for (int i = 11; i < 21; i++) {
-            values2.add(new Point(i, (i * 3)));
-        }
-
-        // on below line we are adding
-        // data to our 3rd value.
-        for (int i = 21; i < 31; i++) {
-            values3.add(new Point(i, (i * 4)));
+        for (PointDTO p : dataList) {
+            String str = p.getTimestamp();
+            SimpleDateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+            Date date = df.parse(str);
+            long epoch = date.getTime();
+            System.out.println(epoch); // 1055545912454
+            temp.add(new Entry(p.getTemperature(), p.getTemperature()/*epoch*/));
+            hum.add(new Entry(p.getHumidity(), p.getHumidity()/*epoch*/));
         }
 
         // create a data set and give it a type
-        ScatterDataSet set1 = new ScatterDataSet(values1, "Point 1");
+        ScatterDataSet set1 = new ScatterDataSet(temp, "Temperature");
 
         // below line is use to set shape for our point on our graph.
         set1.setScatterShape(ScatterChart.ScatterShape.SQUARE);
@@ -184,7 +192,7 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         set1.setColor(ColorTemplate.COLORFUL_COLORS[0]);
 
         // below line is use to create a new point for our scattered chart.
-        ScatterDataSet set2 = new ScatterDataSet(values2, "Point 2");
+        ScatterDataSet set2 = new ScatterDataSet(hum, "Humidity");
 
         // for this point we are setting our shape to circle
         set2.setScatterShape(ScatterChart.ScatterShape.CIRCLE);
@@ -199,17 +207,10 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         // below line is use to set color to our set.
         set2.setColor(ColorTemplate.COLORFUL_COLORS[1]);
 
-        // in below line we are creating a third data set for our chart.
-        ScatterDataSet set3 = new ScatterDataSet(values3, "Point 3");
-
-        // inside this 3rd data set we are setting its color.
-        set3.setColor(ColorTemplate.COLORFUL_COLORS[2]);
-
         // below line is use to set shape size
         // for our data set of the chart.
         set1.setScatterShapeSize(8f);
         set2.setScatterShapeSize(8f);
-        set3.setScatterShapeSize(8f);
 
         // in below line we are creating a new array list for our data set.
         ArrayList<IScatterDataSet> dataSets = new ArrayList<>();
@@ -218,7 +219,6 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         // data sets to above array list.
         dataSets.add(set1); // add the data sets
         dataSets.add(set2);
-        dataSets.add(set3);
 
         // create a data object with the data sets
         ScatterData data = new ScatterData(dataSets);
@@ -229,22 +229,38 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         // at last we are calling
         // invalidate method on our chart.
         chart.invalidate();
-    }*/
+    }
 
     public void insertPointFiltered(PointDTO pointDTO) {
         Spinner spinner = view.findViewById(R.id.spinner);
+        double max_temp,max_hum;
+        String str = ((EditText) view.findViewById(R.id.input_temp)).getText().toString();
+        System.out.println(str);
+        if(!str.isEmpty()){
+            max_temp = Double.parseDouble(str);
+            System.out.println("defined temperature in app");
+        } else {
+            max_temp = 50.0;
+            System.out.println("hello");
+        }
+        str = ((EditText) view.findViewById(R.id.input_hum)).getText().toString();
+        if(!str.isEmpty()){
+            max_hum = Double.parseDouble(str);
+        } else {
+            max_hum = 50.0;
+            System.out.println("hello2");
+        }
 
-        //TODO: thresholds em vez de 55.0
-        if(pointDTO.getTemperature() > 55.0){
-            builder.setContentText("Ups too hot to handle\"");
+        if(pointDTO.getTemperature() > max_temp && pointDTO.getHumidity() > max_hum){
+            builder.setContentText("Both Temperature and Humidity are above the respective thresold ("+ max_temp + "ºC, " + max_hum + "%)!");
             mNotificationManager.notify(123, builder.build());
         }
-        else if(pointDTO.getHumidity() > 55.0){
-            builder.setContentText("Ups too wet to handle\"");
+        else if(pointDTO.getHumidity() > max_hum){
+            builder.setContentText("Humidity is above the " + max_hum + "% thresold!");
             mNotificationManager.notify(123, builder.build());
         }
-        else if(pointDTO.getTemperature() > 55.0 && pointDTO.getHumidity() > 55.0){
-            builder.setContentText("You can not handle. You shall not!");
+        else if(pointDTO.getTemperature() > max_temp){
+            builder.setContentText("Temperature is above the " + max_temp + "ºC thresold!");
             mNotificationManager.notify(123, builder.build());
         }
 
