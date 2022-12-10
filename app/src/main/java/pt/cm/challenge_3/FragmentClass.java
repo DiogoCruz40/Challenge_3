@@ -106,9 +106,8 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-
         chart("temp");
-        chart(/*chart2,*/ "hum");
+        chart("hum");
 
         mViewModel.getPoints().observe(getViewLifecycleOwner(), points -> {
             //TODO: Uncomment when needed inside observer
@@ -122,8 +121,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
                     chartPoints = points;
 
                     chartData();
-                    //chart(points);
-                    //chart();
                 }
 
             } catch (ParseException e) {
@@ -131,7 +128,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
             }
         });
     }
-
 
     public void chart(String dataType){
 
@@ -164,7 +160,8 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         chartUI.setTouchEnabled(true);
 
         chartUI.setDragEnabled(true);
-        chartUI.setScaleEnabled(true);
+        chartUI.setScaleEnabled(false); //VOLTAR
+        //scaleX = chartUI.getScaleX();
 
         chartUI.setPinchZoom(false);
 
@@ -176,26 +173,24 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         l.setYOffset(10f);
         l.setTextSize(15);
 
-        XAxis xAxis = chartUI.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.TOP_INSIDE);
-        xAxis.setTextSize(10f);
-        xAxis.setTextColor(Color.WHITE);
-        xAxis.setDrawAxisLine(false);
-        xAxis.setDrawGridLines(true);
-        xAxis.setTextColor(Color.rgb(255, 192, 56));
-        xAxis.setCenterAxisLabels(true);
-        xAxis.setGranularity(1f); // one hour
-        xAxis.setValueFormatter(new IndexAxisValueFormatter() {
+        chartUI.setVisibleXRangeMaximum(60);
+
+        chartUI.getXAxis().setPosition(XAxis.XAxisPosition.TOP_INSIDE);
+        chartUI.getXAxis().setCenterAxisLabels(true);
+        chartUI.getXAxis().setGranularity(10f); // 10 seconds
+        chartUI.getXAxis().setValueFormatter(new IndexAxisValueFormatter() {
 
             private final SimpleDateFormat mFormat = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
 
             @Override
             public String getFormattedValue(float value) {
 
-                long millis = TimeUnit.HOURS.toMillis((long) value);
-                return mFormat.format(new Date(millis));
+                long millis = TimeUnit.SECONDS.toMillis((long) value);
+                long actualDate = (long) millis + firstDate*1000;
+                return mFormat.format(new Date(actualDate));
             }
         });
+
         if(Objects.equals(dataType, "temp")){
             chart1  = chartUI;
             //chart1.getXAxis().setEnabled(false);
@@ -219,7 +214,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
             try {
 
                 Date date = df.parse(str);
-                long epoch = date.getTime()/1000 - firstDate; //dividir por mil - milisegundos
+                long epoch = date.getTime()/1000 - firstDate; //divide by 1000 - milliseconds
                 //Dps posso converter para a data normal again
 
                 if(p.getTemperature() != null) {
@@ -235,6 +230,8 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
             }
         }
 
+        long diff = (long) hum.get(hum.size()-1).getX();
+
         LineDataSet tempLine = new LineDataSet(temp, "Temperature");
 
         tempLine.setLineWidth(2f);
@@ -244,6 +241,25 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         tempLine.setDrawValues(false);
 
         tempData = new LineData(tempLine);
+
+        float centerX, scaleX = 60;
+
+        if (diff < 60){
+            centerX = chart1.getCenter().getX();
+        }
+        else{
+            scaleX = 60 + (float) (diff/(0.001*diff));
+            centerX = chart1.getCenter().getX() + diff*scaleX;
+            System.out.println("TESTE  " + diff + " " + chart1.getCenterOffsets().getX() + " " + centerX );
+        }
+        //chart1.getCenterOffsets().getX();
+        //TODO: verificar se isto está bem
+        //TODO: 2 fazer que os dois gráficos se movam ao mesmo tempo
+        chart1.zoom(scaleX, 1, centerX, chart1.getCenter().getY());
+
+        chart1.resetTracking();
+        chart1.setData(tempData);
+        chart1.invalidate();
 
         LineDataSet humLine = new LineDataSet(hum, "Humidity");
 
@@ -255,9 +271,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
 
         humData = new LineData(humLine);
 
-        chart1.resetTracking();
-        chart1.setData(tempData);
-        chart1.invalidate();
         chart2.resetTracking();
         chart2.setData(humData);
         chart2.invalidate();
