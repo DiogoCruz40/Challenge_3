@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements ActivityInterface
 
         model  = new ViewModelProvider(this).get(SharedViewModel.class);
         model.startDB();
+//        model.deleteAllPoints();
         model.getToastMessageObserver().observe(this, message -> {
             Toast.makeText(this,message,Toast.LENGTH_SHORT).show();
         });

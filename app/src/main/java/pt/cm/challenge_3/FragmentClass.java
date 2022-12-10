@@ -115,6 +115,10 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+
+        chart("temp");
+        chart(/*chart2,*/ "hum");
+
         mViewModel.getPoints().observe(getViewLifecycleOwner(), points -> {
             //TODO: Uncomment when needed inside observer
             try {
@@ -127,15 +131,10 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
                     chartPoints = points;
 
                     chartData();
-
                     //chart(points);
-
-                    chart("temp");
-                    chart(/*chart2,*/ "hum");
-
                     //chart();
-
                 }
+
             } catch (ParseException e) {
                 Log.w("chart",e.getMessage());
             }
@@ -148,15 +147,12 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         MainActivity a = activityInterface.getMainActivity();
 
         LineChart chartUI;
-        LineData data;
 
         if(Objects.equals(dataType, "temp")){
             chartUI = a.findViewById(R.id.chart1);
-            data = tempData;
         }
         else if(Objects.equals(dataType, "hum")){
             chartUI = a.findViewById(R.id.chart2);
-            data = humData;
         }
         else{return;}
 
@@ -190,19 +186,9 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         if(Objects.equals(dataType, "temp")){
             chart1  = chartUI;
             //chart1.getXAxis().setEnabled(false);
-
-            chart1.resetTracking();
-
-            chart1.setData(data);
-            chart1.invalidate();
         }
         else if(Objects.equals(dataType, "hum")){
             chart2 = chartUI;
-
-            chart2.resetTracking();
-
-            chart2.setData(data);
-            chart2.invalidate();
         }
 
     }
@@ -255,6 +241,13 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         humLine.setDrawValues(false);
 
         humData = new LineData(humLine);
+
+        chart1.resetTracking();
+        chart1.setData(tempData);
+        chart1.invalidate();
+        chart2.resetTracking();
+        chart2.setData(humData);
+        chart2.invalidate();
     }
 
     private final int[] colors = new int[] {
@@ -390,7 +383,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
 
         CharSequence name = "WARNING";
         String description = "ups";
-        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        int importance = NotificationManager.IMPORTANCE_HIGH;
         NotificationChannel channel = new NotificationChannel("WARNING_ID", name, importance);
         channel.setDescription(description);
 
