@@ -7,16 +7,13 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,16 +40,12 @@ import com.github.mikephil.charting.charts.ScatterChart;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.data.ScatterData;
-import com.github.mikephil.charting.data.ScatterDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.IScatterDataSet;
 import com.github.mikephil.charting.listener.ChartTouchListener;
 import com.github.mikephil.charting.listener.OnChartGestureListener;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
@@ -67,8 +60,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
     private NotificationCompat.Builder builder;
     private NotificationManager mNotificationManager;
 
-    private ScatterChart scatterChart;
-    private LineChart chart;
     private LineChart chart1, chart2;
     private long firstDate;
 
@@ -178,11 +169,33 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         chartUI.setPinchZoom(false);
 
         Legend l = chartUI.getLegend();
-        l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
-        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
+        l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         l.setOrientation(Legend.LegendOrientation.VERTICAL);
-        l.setDrawInside(true);
+        l.setDrawInside(false);
+        l.setYOffset(10f);
+        l.setTextSize(15);
 
+        XAxis xAxis = chartUI.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.TOP_INSIDE);
+        xAxis.setTextSize(10f);
+        xAxis.setTextColor(Color.WHITE);
+        xAxis.setDrawAxisLine(false);
+        xAxis.setDrawGridLines(true);
+        xAxis.setTextColor(Color.rgb(255, 192, 56));
+        xAxis.setCenterAxisLabels(true);
+        xAxis.setGranularity(1f); // one hour
+        xAxis.setValueFormatter(new IndexAxisValueFormatter() {
+
+            private final SimpleDateFormat mFormat = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+
+            @Override
+            public String getFormattedValue(float value) {
+
+                long millis = TimeUnit.HOURS.toMillis((long) value);
+                return mFormat.format(new Date(millis));
+            }
+        });
         if(Objects.equals(dataType, "temp")){
             chart1  = chartUI;
             //chart1.getXAxis().setEnabled(false);
@@ -317,7 +330,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
     public void insertPointFiltered(PointDTO pointDTO) {
         Spinner spinner = view.findViewById(R.id.spinner);
         double max_temp, max_hum;
-        String str = ((EditText) view.findViewById(R.id.input_temp)).getText().toString();
+        String str = ((EditText) view.findViewById(R.id.input_hum)).getText().toString();
         System.out.println(str);
         if (!str.isEmpty()) {
             max_temp = Double.parseDouble(str);
@@ -325,7 +338,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         } else {
             max_temp = 50.0;
         }
-        str = ((EditText) view.findViewById(R.id.input_hum)).getText().toString();
+        str = ((EditText) view.findViewById(R.id.input_temp)).getText().toString();
         if (!str.isEmpty()) {
             max_hum = Double.parseDouble(str);
         } else {
