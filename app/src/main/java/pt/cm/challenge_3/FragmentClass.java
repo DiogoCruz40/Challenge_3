@@ -3,15 +3,14 @@ package pt.cm.challenge_3;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.widget.Adapter;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -31,25 +30,36 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import pt.cm.challenge_3.Interfaces.ActivityInterface;
 import pt.cm.challenge_3.Interfaces.FragmentInterface;
-import pt.cm.challenge_3.database.entities.Point;
 import pt.cm.challenge_3.dtos.PointDTO;
 
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.ScatterChart;
-import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.ScatterData;
 import com.github.mikephil.charting.data.ScatterDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IScatterDataSet;
+import com.github.mikephil.charting.listener.ChartTouchListener;
+import com.github.mikephil.charting.listener.OnChartGestureListener;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 
-public class FragmentClass extends Fragment implements FragmentInterface {
+public class FragmentClass extends Fragment implements FragmentInterface, OnChartGestureListener, OnChartValueSelectedListener {
 
     private SharedViewModel mViewModel;
     private ActivityInterface activityInterface;
@@ -57,9 +67,15 @@ public class FragmentClass extends Fragment implements FragmentInterface {
     private NotificationCompat.Builder builder;
     private NotificationManager mNotificationManager;
 
-    private ScatterChart chart;
-    private SeekBar seekBarX, seekBarY;
-    private TextView tvX, tvY;
+    private ScatterChart scatterChart;
+    private LineChart chart;
+    private LineChart chart1, chart2;
+    private long firstDate;
+
+    private List<PointDTO> chartPoints;
+
+    private LineData tempData;
+    private LineData humData;
 
     public FragmentClass() {
 
@@ -78,7 +94,7 @@ public class FragmentClass extends Fragment implements FragmentInterface {
 
         view = inflater.inflate(R.layout.fragment_class, container, false);
 
-        builder = new NotificationCompat.Builder(activityInterface.getmainactivity(), "WARNING_ID")
+        builder = new NotificationCompat.Builder(activityInterface.getMainActivity(), "WARNING_ID")
                 .setSmallIcon(R.drawable.ic_warning_notif)
                 .setContentTitle("Warning")
                 .setContentText("Default")
@@ -86,9 +102,9 @@ public class FragmentClass extends Fragment implements FragmentInterface {
 
         createNotificationChannel();
 
-        this.mViewModel = new ViewModelProvider(activityInterface.getmainactivity()).get(SharedViewModel.class);
+        this.mViewModel = new ViewModelProvider(activityInterface.getMainActivity()).get(SharedViewModel.class);
         Spinner spinner = (Spinner) view.findViewById(R.id.spinner);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(activityInterface.getmainactivity(), android.R.layout.simple_spinner_item, Arrays.asList("All", "Temperature", "Humidity"));
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(activityInterface.getMainActivity(), android.R.layout.simple_spinner_item, Arrays.asList("All", "Temperature", "Humidity"));
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
 
@@ -102,147 +118,348 @@ public class FragmentClass extends Fragment implements FragmentInterface {
         mViewModel.getPoints().observe(getViewLifecycleOwner(), points -> {
             //TODO: Uncomment when needed inside observer
             try {
-                chart(points);
+                if(!points.isEmpty()){
+
+                    SimpleDateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+                    Date date = df.parse(points.get(0).getTimestamp());
+                    firstDate = date.getTime()/1000; //drop milliseconds
+
+                    chartPoints = points;
+
+                    chartData();
+
+                    //chart(points);
+
+                    chart("temp");
+                    chart(/*chart2,*/ "hum");
+
+                    //chart();
+
+                }
             } catch (ParseException e) {
                 Log.w("chart",e.getMessage());
             }
         });
     }
 
-    public void chart(List<PointDTO> points) throws ParseException {
 
-        MainActivity a = activityInterface.getmainactivity();
+    public void chart(String dataType){
 
-        chart = a.findViewById(R.id.chart1);
+        MainActivity a = activityInterface.getMainActivity();
 
-        // below line is use to disable the description of our scatter chart.
-        chart.getDescription().setEnabled(false);
+        LineChart chartUI;
+        LineData data;
 
-        // below line is use to draw grid background
-        // and we are setting it to false.
-        chart.setDrawGridBackground(false);
+        if(Objects.equals(dataType, "temp")){
+            chartUI = a.findViewById(R.id.chart1);
+            data = tempData;
+        }
+        else if(Objects.equals(dataType, "hum")){
+            chartUI = a.findViewById(R.id.chart2);
+            data = humData;
+        }
+        else{return;}
 
-        // below line is use to set touch enable for our chart.
-        chart.setTouchEnabled(true);
+        chartUI.setOnChartValueSelectedListener(this);
 
-        // below line is use to set maximum highlight distance for our chart.
-        chart.setMaxHighlightDistance(85f);
+        chartUI.setDrawGridBackground(false);
+        chartUI.getDescription().setEnabled(false);
+        chartUI.setDrawBorders(false);
 
-        // below line is use to set dragging for our chart.
-        chart.setDragEnabled(true);
+        chartUI.getAxisLeft().setEnabled(false);
+        chartUI.getAxisRight().setDrawAxisLine(false);
+        chartUI.getAxisRight().setDrawGridLines(false);
+        //chart.getXAxis().setAxisMinimum(firstDate);
+        chartUI.getXAxis().setDrawAxisLine(false);
+        chartUI.getXAxis().setDrawGridLines(false);
 
-        // below line is use to set scale to our chart.
-        chart.setScaleEnabled(true);
+        chartUI.setTouchEnabled(true);
+        chartUI.setTouchEnabled(true);
 
-        // below line is use to set maximum visible count to our chart.
-        chart.setMaxVisibleValueCount(200);
+        chartUI.setDragEnabled(true);
+        chartUI.setScaleEnabled(true);
 
-        // below line is use to set
-        // pinch zoom to our chart.
-        chart.setPinchZoom(true);
+        chartUI.setPinchZoom(false);
 
-        // below line we are getting the legend of our chart.
-        Legend l = chart.getLegend();
-
-        // after getting our chart we are setting our chart for vertical and horizontal
-        // alignment to top, right and vertical.
+        Legend l = chartUI.getLegend();
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.RIGHT);
         l.setOrientation(Legend.LegendOrientation.VERTICAL);
+        l.setDrawInside(true);
 
-        // below line is use for setting draw inside to false.
-        l.setDrawInside(false);
+        if(Objects.equals(dataType, "temp")){
+            chart1  = chartUI;
+            //chart1.getXAxis().setEnabled(false);
 
-        // below line is use to set offset value for our legend.
-        l.setXOffset(5f);
+            chart1.resetTracking();
 
-        // below line is use to get y-axis of our chart.
-        YAxis yl = chart.getAxisLeft();
+            chart1.setData(data);
+            chart1.invalidate();
+        }
+        else if(Objects.equals(dataType, "hum")){
+            chart2 = chartUI;
 
-        // below line is use to set minimum axis to our y axis.
-        yl.setAxisMinimum(0f);
+            chart2.resetTracking();
 
-        // below line is use to get axis right of our chart
-        chart.getAxisRight().setEnabled(false);
+            chart2.setData(data);
+            chart2.invalidate();
+        }
 
-        // below line is use to get x axis of our chart.
-        XAxis xl = chart.getXAxis();
+    }
 
-        // below line is use to enable
-        // drawing of grid lines.
-        xl.setDrawGridLines(false);
+    public void chartData(){
 
-        // in below line we are creating an array list for each entry of our chart.
-        // we will be representing three values in our charts.
-        // below is the line where we are creating three lines for our chart.
         ArrayList<Entry> temp = new ArrayList<>();
         ArrayList<Entry> hum = new ArrayList<>();
 
+        for (PointDTO p : chartPoints) {
 
-        // on below line we are adding data to our charts.
-        for (PointDTO p : points) {
             String str = p.getTimestamp();
             SimpleDateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
-            Date date = df.parse(str);
-            long epoch = date.getTime();
-            System.out.println(epoch); // 1055545912454
 
-            if(p.getTemperature() != null) {
-                temp.add(new Entry(p.getTemperature(), p.getTemperature() /* epoch */));
-            }else if(p.getHumidity() != null)
-            {
-                hum.add(new Entry(p.getHumidity(), p.getHumidity()/*epoch */));
+            try {
+
+                Date date = df.parse(str);
+                long epoch = date.getTime()/1000 - firstDate; //dividir por mil - milisegundos
+                //Dps posso converter para a data normal again
+
+                if(p.getTemperature() != null) {
+                    temp.add(new Entry(epoch, p.getTemperature()));
+                }
+
+                if(p.getHumidity() != null){
+                    hum.add(new Entry(epoch, p.getHumidity()));
+                }
+
+            } catch (ParseException e) {
+                e.printStackTrace();
             }
         }
 
-        // create a data set and give it a type
-        ScatterDataSet set1 = new ScatterDataSet(temp, "Temperature");
+        LineDataSet tempLine = new LineDataSet(temp, "Temperature");
 
-        // below line is use to set shape for our point on our graph.
-        set1.setScatterShape(ScatterChart.ScatterShape.SQUARE);
+        tempLine.setLineWidth(2f);
+        tempLine.setCircleRadius(3f);
+        tempLine.setColor(colors[2]);
+        tempLine.setCircleColor(colors[2]);
+        tempLine.setDrawValues(false);
 
-        // below line is for setting color to our shape.
-        set1.setColor(ColorTemplate.COLORFUL_COLORS[0]);
+        tempData = new LineData(tempLine);
 
-        // below line is use to create a new point for our scattered chart.
-        ScatterDataSet set2 = new ScatterDataSet(hum, "Humidity");
+        LineDataSet humLine = new LineDataSet(hum, "Humidity");
 
-        // for this point we are setting our shape to circle
-        set2.setScatterShape(ScatterChart.ScatterShape.CIRCLE);
+        humLine.setLineWidth(2f);
+        humLine.setCircleRadius(3f);
+        humLine.setColor(colors[3]);
+        humLine.setCircleColor(colors[3]);
+        humLine.setDrawValues(false);
 
-        // below line is for setting color to our point in chart.
-        set2.setScatterShapeHoleColor(ColorTemplate.COLORFUL_COLORS[3]);
-
-        // below line is use to set hole
-        // radius to our point in chart.
-        set2.setScatterShapeHoleRadius(3f);
-
-        // below line is use to set color to our set.
-        set2.setColor(ColorTemplate.COLORFUL_COLORS[1]);
-
-        // below line is use to set shape size
-        // for our data set of the chart.
-        set1.setScatterShapeSize(8f);
-        set2.setScatterShapeSize(8f);
-
-        // in below line we are creating a new array list for our data set.
-        ArrayList<IScatterDataSet> dataSets = new ArrayList<>();
-
-        // in below line we are adding all
-        // data sets to above array list.
-        dataSets.add(set1); // add the data sets
-        dataSets.add(set2);
-
-        // create a data object with the data sets
-        ScatterData data = new ScatterData(dataSets);
-
-        // below line is use to set data to our chart
-        chart.setData(data);
-
-        // at last we are calling
-        // invalidate method on our chart.
-        chart.invalidate();
+        humData = new LineData(humLine);
     }
+
+    private final int[] colors = new int[] {
+            ColorTemplate.VORDIPLOM_COLORS[0],
+            ColorTemplate.VORDIPLOM_COLORS[1],
+            ColorTemplate.VORDIPLOM_COLORS[2],
+            ColorTemplate.VORDIPLOM_COLORS[3],
+    };
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        /*
+        switch (item.getItemId()) {
+            case R.id.viewGithub: {
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse("https://github.com/PhilJay/MPAndroidChart/blob/master/MPChartExample/src/com/xxmassdeveloper/mpchartexample/MultiLineChartActivity.java"));
+                startActivity(i);
+                break;
+            }
+            case R.id.actionToggleValues: {
+                List<ILineDataSet> sets = chart.getData()
+                        .getDataSets();
+
+                for (ILineDataSet iSet : sets) {
+
+                    LineDataSet set = (LineDataSet) iSet;
+                    set.setDrawValues(!set.isDrawValuesEnabled());
+                }
+
+                chart.invalidate();
+                break;
+            }
+            case R.id.actionTogglePinch: {
+                if (chart.isPinchZoomEnabled())
+                    chart.setPinchZoom(false);
+                else
+                    chart.setPinchZoom(true);
+
+                chart.invalidate();
+                break;
+            }
+            case R.id.actionToggleAutoScaleMinMax: {
+                chart.setAutoScaleMinMaxEnabled(!chart.isAutoScaleMinMaxEnabled());
+                chart.notifyDataSetChanged();
+                break;
+            }
+            case R.id.actionToggleHighlight: {
+                if(chart.getData() != null) {
+                    chart.getData().setHighlightEnabled(!chart.getData().isHighlightEnabled());
+                    chart.invalidate();
+                }
+                break;
+            }
+            case R.id.actionToggleFilled: {
+                List<ILineDataSet> sets = chart.getData()
+                        .getDataSets();
+
+                for (ILineDataSet iSet : sets) {
+
+                    LineDataSet set = (LineDataSet) iSet;
+                    if (set.isDrawFilledEnabled())
+                        set.setDrawFilled(false);
+                    else
+                        set.setDrawFilled(true);
+                }
+                chart.invalidate();
+                break;
+            }
+            case R.id.actionToggleCircles: {
+                List<ILineDataSet> sets = chart.getData()
+                        .getDataSets();
+
+                for (ILineDataSet iSet : sets) {
+
+                    LineDataSet set = (LineDataSet) iSet;
+                    if (set.isDrawCirclesEnabled())
+                        set.setDrawCircles(false);
+                    else
+                        set.setDrawCircles(true);
+                }
+                chart.invalidate();
+                break;
+            }
+            case R.id.actionToggleCubic: {
+                List<ILineDataSet> sets = chart.getData()
+                        .getDataSets();
+
+                for (ILineDataSet iSet : sets) {
+
+                    LineDataSet set = (LineDataSet) iSet;
+                    set.setMode(set.getMode() == LineDataSet.Mode.CUBIC_BEZIER
+                            ? LineDataSet.Mode.LINEAR
+                            :  LineDataSet.Mode.CUBIC_BEZIER);
+                }
+                chart.invalidate();
+                break;
+            }
+            case R.id.actionToggleStepped: {
+                List<ILineDataSet> sets = chart.getData()
+                        .getDataSets();
+
+                for (ILineDataSet iSet : sets) {
+
+                    LineDataSet set = (LineDataSet) iSet;
+                    set.setMode(set.getMode() == LineDataSet.Mode.STEPPED
+                            ? LineDataSet.Mode.LINEAR
+                            :  LineDataSet.Mode.STEPPED);
+                }
+                chart.invalidate();
+                break;
+            }
+            case R.id.actionToggleHorizontalCubic: {
+                List<ILineDataSet> sets = chart.getData()
+                        .getDataSets();
+
+                for (ILineDataSet iSet : sets) {
+
+                    LineDataSet set = (LineDataSet) iSet;
+                    set.setMode(set.getMode() == LineDataSet.Mode.HORIZONTAL_BEZIER
+                            ? LineDataSet.Mode.LINEAR
+                            :  LineDataSet.Mode.HORIZONTAL_BEZIER);
+                }
+                chart.invalidate();
+                break;
+            }
+            case R.id.actionSave: {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    saveToGallery();
+                } else {
+                    requestStoragePermission(chart);
+                }
+                break;
+            }
+            case R.id.animateX: {
+                chart.animateX(2000);
+                break;
+            }
+            case R.id.animateY: {
+                chart.animateY(2000);
+                break;
+            }
+            case R.id.animateXY: {
+                chart.animateXY(2000, 2000);
+                break;
+            }
+        }*/
+        return true;
+    }
+
+    @Override
+    public void onChartGestureStart(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+        Log.i("Gesture", "START, x: " + me.getX() + ", y: " + me.getY());
+    }
+
+    @Override
+    public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
+        Log.i("Gesture", "END, lastGesture: " + lastPerformedGesture);
+
+        // un-highlight values after the gesture is finished and no single-tap
+
+        /*
+        if(lastPerformedGesture != ChartTouchListener.ChartGesture.SINGLE_TAP)
+            chart.highlightValues(null); // or highlightTouch(null) for callback to onNothingSelected(...)*/
+
+    }
+
+    @Override
+    public void onChartLongPressed(MotionEvent me) {
+        Log.i("LongPress", "Chart long pressed.");
+    }
+
+    @Override
+    public void onChartDoubleTapped(MotionEvent me) {
+        Log.i("DoubleTap", "Chart double-tapped.");
+    }
+
+    @Override
+    public void onChartSingleTapped(MotionEvent me) {
+        Log.i("SingleTap", "Chart single-tapped.");
+    }
+
+    @Override
+    public void onChartFling(MotionEvent me1, MotionEvent me2, float velocityX, float velocityY) {
+        Log.i("Fling", "Chart fling. VelocityX: " + velocityX + ", VelocityY: " + velocityY);
+    }
+
+    @Override
+    public void onChartScale(MotionEvent me, float scaleX, float scaleY) {
+        Log.i("Scale / Zoom", "ScaleX: " + scaleX + ", ScaleY: " + scaleY);
+    }
+
+    @Override
+    public void onChartTranslate(MotionEvent me, float dX, float dY) {
+        Log.i("Translate / Move", "dX: " + dX + ", dY: " + dY);
+    }
+
+    @Override
+    public void onValueSelected(Entry e, Highlight h) {
+        Log.i("VAL SELECTED",
+                "Value: " + e.getY() + ", xIndex: " + e.getX()
+                        + ", DataSet index: " + h.getDataSetIndex());
+    }
+
+    @Override
+    public void onNothingSelected() {}
 
     public void insertPointFiltered(PointDTO pointDTO) {
         Spinner spinner = view.findViewById(R.id.spinner);
@@ -254,14 +471,12 @@ public class FragmentClass extends Fragment implements FragmentInterface {
             System.out.println("defined temperature in app");
         } else {
             max_temp = 50.0;
-            System.out.println("hello");
         }
         str = ((EditText) view.findViewById(R.id.input_hum)).getText().toString();
         if (!str.isEmpty()) {
             max_hum = Double.parseDouble(str);
         } else {
             max_hum = 50.0;
-            System.out.println("hello2");
         }
 
         if (pointDTO.getTemperature() > max_temp && pointDTO.getHumidity() > max_hum) {
@@ -312,16 +527,14 @@ public class FragmentClass extends Fragment implements FragmentInterface {
     }
 
     private void createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
+
         CharSequence name = "WARNING";
         String description = "ups";
         int importance = NotificationManager.IMPORTANCE_DEFAULT;
         NotificationChannel channel = new NotificationChannel("WARNING_ID", name, importance);
         channel.setDescription(description);
-        // Register the channel with the system; you can't change the importance
-        // or other notification behaviors after this
-        mNotificationManager = (NotificationManager) activityInterface.getmainactivity().getSystemService(Context.NOTIFICATION_SERVICE);
+
+        mNotificationManager = (NotificationManager) activityInterface.getMainActivity().getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.createNotificationChannel(channel);
     }
 

@@ -65,9 +65,12 @@ public class SharedViewModel extends AndroidViewModel {
                             points.setValue(pointsDTO);
                         }
 
-//                        //AQUI
-//                        System.out.println("AQUI");
-//                        System.out.println(pointsDTO);
+                        /*
+                        System.out.println("AQUI: " + pointsDTO.size());
+
+                        for(PointDTO p: pointsDTO){
+                            System.out.println(p.getTimestamp() + " " + p.getTemperature());
+                        }*/
 
                     }
                 });
@@ -99,7 +102,7 @@ public class SharedViewModel extends AndroidViewModel {
         });
     }
 
-    private void deleteAllPoints() {
+    public void deleteAllPoints() {
         AppExecutors.getInstance().diskIO().execute(new Runnable() {
             @Override
             public void run() {

@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements ActivityInterface
     @Override
     protected void onResume() {
         super.onResume();
-        model.startDB();
+        //model.startDB();
     }
 
     @Override
@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements ActivityInterface
     }
 
     @Override
-    public MainActivity getmainactivity() {
+    public MainActivity getMainActivity() {
         return this;
     }
 
