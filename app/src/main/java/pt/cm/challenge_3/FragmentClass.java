@@ -10,10 +10,12 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -35,11 +37,13 @@ import pt.cm.challenge_3.Interfaces.ActivityInterface;
 import pt.cm.challenge_3.Interfaces.FragmentInterface;
 import pt.cm.challenge_3.dtos.PointDTO;
 
+import com.github.mikephil.charting.charts.Chart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.ScatterChart;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -98,6 +102,15 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         ArrayAdapter<String> adapter = new ArrayAdapter<>(activityInterface.getMainActivity(), android.R.layout.simple_spinner_item, Arrays.asList("All", "Temperature", "Humidity"));
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                ((TextView)adapterView.getChildAt(0)).setTextColor(Color.parseColor("#FFFFFF"));
+            }
+
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                return;
+            }
+        });
 
         return view;
     }
@@ -134,7 +147,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         MainActivity a = activityInterface.getMainActivity();
 
         LineChart chartUI;
-
         if(Objects.equals(dataType, "temp")){
             chartUI = a.findViewById(R.id.chart1);
         }
@@ -155,10 +167,9 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         //chart.getXAxis().setAxisMinimum(firstDate);
         chartUI.getXAxis().setDrawAxisLine(false);
         chartUI.getXAxis().setDrawGridLines(false);
-
+        chartUI.getAxisRight().setTextColor(Color.rgb(255, 255, 255));
         chartUI.setTouchEnabled(true);
         chartUI.setTouchEnabled(true);
-
         chartUI.setDragEnabled(true);
         chartUI.setScaleEnabled(false); //VOLTAR
         //scaleX = chartUI.getScaleX();
@@ -172,6 +183,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         l.setDrawInside(false);
         l.setYOffset(10f);
         l.setTextSize(15);
+        l.setTextColor(Color.rgb(255, 255, 255));
 
         chartUI.setVisibleXRangeMaximum(60);
 
