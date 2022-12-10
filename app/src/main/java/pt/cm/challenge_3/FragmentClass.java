@@ -104,7 +104,9 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                ((TextView)adapterView.getChildAt(0)).setTextColor(Color.parseColor("#FFFFFF"));
+               TextView textView = ((TextView)adapterView.getChildAt(0));
+               textView.setTextColor(Color.parseColor("#FFFFFF"));
+
             }
 
             public void onNothingSelected(AdapterView<?> adapterView) {
@@ -167,7 +169,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         //chart.getXAxis().setAxisMinimum(firstDate);
         chartUI.getXAxis().setDrawAxisLine(false);
         chartUI.getXAxis().setDrawGridLines(false);
-        chartUI.getAxisRight().setTextColor(Color.rgb(255, 255, 255));
+//        chartUI.getAxisRight().setTextColor(Color.rgb(255, 255, 255));
         chartUI.setTouchEnabled(true);
         chartUI.setTouchEnabled(true);
         chartUI.setDragEnabled(true);
@@ -183,7 +185,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         l.setDrawInside(false);
         l.setYOffset(10f);
         l.setTextSize(15);
-        l.setTextColor(Color.rgb(255, 255, 255));
+        l.setTextColor(Color.rgb(0, 0, 0));
 
         chartUI.setVisibleXRangeMaximum(60);
 
