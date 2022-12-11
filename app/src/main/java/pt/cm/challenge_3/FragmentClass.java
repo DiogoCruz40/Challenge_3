@@ -69,13 +69,9 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
 
     private List<PointDTO> chartPoints;
 
-    private LineData tempData;
-    private LineData humData;
-
     public FragmentClass() {
 
     }
-
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -166,15 +162,13 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         chartUI.getAxisLeft().setEnabled(false);
         chartUI.getAxisRight().setDrawAxisLine(false);
         chartUI.getAxisRight().setDrawGridLines(false);
-        //chart.getXAxis().setAxisMinimum(firstDate);
         chartUI.getXAxis().setDrawAxisLine(false);
         chartUI.getXAxis().setDrawGridLines(false);
-//        chartUI.getAxisRight().setTextColor(Color.rgb(255, 255, 255));
-        chartUI.setTouchEnabled(true);
+        chartUI.getXAxis().setLabelRotationAngle(-9f);
+        chartUI.getXAxis().setAvoidFirstLastClipping(true);
         chartUI.setTouchEnabled(true);
         chartUI.setDragEnabled(true);
-        chartUI.setScaleEnabled(false); //VOLTAR
-        //scaleX = chartUI.getScaleX();
+        chartUI.setScaleEnabled(true);
 
         chartUI.setPinchZoom(false);
 
@@ -189,7 +183,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
 
         chartUI.setVisibleXRangeMaximum(60);
 
-        chartUI.getXAxis().setPosition(XAxis.XAxisPosition.TOP_INSIDE);
         chartUI.getXAxis().setCenterAxisLabels(true);
         chartUI.getXAxis().setGranularity(10f); // 10 seconds
         chartUI.getXAxis().setValueFormatter(new IndexAxisValueFormatter() {
@@ -207,7 +200,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
 
         if(Objects.equals(dataType, "temp")){
             chart1  = chartUI;
-            //chart1.getXAxis().setEnabled(false);
         }
         else if(Objects.equals(dataType, "hum")){
             chart2 = chartUI;
@@ -244,8 +236,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
             }
         }
 
-        long diff = (long) hum.get(hum.size()-1).getX();
-
         LineDataSet tempLine = new LineDataSet(temp, "Temperature");
 
         tempLine.setLineWidth(2f);
@@ -254,22 +244,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         tempLine.setCircleColor(colors[2]);
         tempLine.setDrawValues(false);
 
-        tempData = new LineData(tempLine);
-
-        float centerX, scaleX = 60;
-
-        if (diff < 60){
-            centerX = chart1.getCenter().getX();
-        }
-        else{
-            scaleX = 60 + (float) (diff/(0.001*diff));
-            centerX = chart1.getCenter().getX() + diff*scaleX;
-            System.out.println("TESTE  " + diff + " " + chart1.getCenterOffsets().getX() + " " + centerX );
-        }
-        //chart1.getCenterOffsets().getX();
-        //TODO: verificar se isto está bem
-        //TODO: 2 fazer que os dois gráficos se movam ao mesmo tempo
-        chart1.zoom(scaleX, 1, centerX, chart1.getCenter().getY());
+        LineData tempData = new LineData(tempLine);
 
         chart1.resetTracking();
         chart1.setData(tempData);
@@ -283,7 +258,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         humLine.setCircleColor(colors[3]);
         humLine.setDrawValues(false);
 
-        humData = new LineData(humLine);
+        LineData humData = new LineData(humLine);
 
         chart2.resetTracking();
         chart2.setData(humData);
@@ -305,8 +280,6 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
     @Override
     public void onChartGestureEnd(MotionEvent me, ChartTouchListener.ChartGesture lastPerformedGesture) {
         Log.i("Gesture", "END, lastGesture: " + lastPerformedGesture);
-
-        // un-highlight values after the gesture is finished and no single-tap
 
         /*
         if(lastPerformedGesture != ChartTouchListener.ChartGesture.SINGLE_TAP)
