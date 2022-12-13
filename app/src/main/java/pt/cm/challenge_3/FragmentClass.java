@@ -345,13 +345,13 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
             max_hum = 50.0;
         }
 
-        if (pointDTO.getTemperature() > max_temp && pointDTO.getHumidity() > max_hum) {
+        if (pointDTO.getTemperature() > max_temp && pointDTO.getHumidity() > max_hum && spinner.getSelectedItem().toString().equals("All")) {
             builder.setContentText("Both Temperature and Humidity are above the respective threshold (" + max_temp + "ºC, " + max_hum + "%)!");
             mNotificationManager.notify(123, builder.build());
-        } else if (pointDTO.getHumidity() > max_hum) {
+        } else if (pointDTO.getHumidity() > max_hum && !spinner.getSelectedItem().toString().equals("Temperature")) {
             builder.setContentText("Humidity is above the " + max_hum + "% threshold!");
             mNotificationManager.notify(123, builder.build());
-        } else if (pointDTO.getTemperature() > max_temp) {
+        } else if (pointDTO.getTemperature() > max_temp && !spinner.getSelectedItem().toString().equals("Humidity")) {
             builder.setContentText("Temperature is above the " + max_temp + "ºC threshold!");
             mNotificationManager.notify(123, builder.build());
         }
