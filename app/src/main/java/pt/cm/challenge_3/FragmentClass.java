@@ -330,7 +330,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
     public void insertPointFiltered(PointDTO pointDTO) {
         Spinner spinner = view.findViewById(R.id.spinner);
         double max_temp, max_hum;
-        String str = ((EditText) view.findViewById(R.id.input_hum)).getText().toString();
+        String str = ((EditText) view.findViewById(R.id.input_temp)).getText().toString();
         System.out.println(str);
         if (!str.isEmpty()) {
             max_temp = Double.parseDouble(str);
@@ -338,7 +338,7 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         } else {
             max_temp = 50.0;
         }
-        str = ((EditText) view.findViewById(R.id.input_temp)).getText().toString();
+        str = ((EditText) view.findViewById(R.id.input_hum)).getText().toString();
         if (!str.isEmpty()) {
             max_hum = Double.parseDouble(str);
         } else {
@@ -346,13 +346,13 @@ public class FragmentClass extends Fragment implements FragmentInterface, OnChar
         }
 
         if (pointDTO.getTemperature() > max_temp && pointDTO.getHumidity() > max_hum) {
-            builder.setContentText("Both Temperature and Humidity are above the respective thresold (" + max_temp + "ºC, " + max_hum + "%)!");
+            builder.setContentText("Both Temperature and Humidity are above the respective threshold (" + max_temp + "ºC, " + max_hum + "%)!");
             mNotificationManager.notify(123, builder.build());
         } else if (pointDTO.getHumidity() > max_hum) {
-            builder.setContentText("Humidity is above the " + max_hum + "% thresold!");
+            builder.setContentText("Humidity is above the " + max_hum + "% threshold!");
             mNotificationManager.notify(123, builder.build());
         } else if (pointDTO.getTemperature() > max_temp) {
-            builder.setContentText("Temperature is above the " + max_temp + "ºC thresold!");
+            builder.setContentText("Temperature is above the " + max_temp + "ºC threshold!");
             mNotificationManager.notify(123, builder.build());
         }
 
